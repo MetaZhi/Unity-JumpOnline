@@ -11,6 +11,8 @@ public class RealTime : MonoBehaviour
     public string ConversationId = "5aaf67f05b90c830ff7ce22a";
 
     AVRealtime _avRealtime;
+    AVIMClient _client;
+    AVIMConversation _lobbyConversation;
 
     private static RealTime _instance;
     public static RealTime Instance
@@ -28,23 +30,27 @@ public class RealTime : MonoBehaviour
         AVRealtime.WebSocketLog(Debug.LogWarning);
     }
 
+    void OnDestroy()
+    {
+        _client.CloseAsync();
+        _instance = null;
+    }
+
     public void JoinLobby()
     {
-        AVIMClient client = null;
-        AVIMConversation lobbyConversation = null;
         // 以周瑜的游戏 ID 3002 作为 client Id 构建 AVIMClient
-        _avRealtime.CreateClientAsync(UserInfo.User).ContinueWith(t => client = t.Result).ContinueWith(s =>
+        _avRealtime.CreateClientAsync(UserInfo.User).ContinueWith(t => _client = t.Result).ContinueWith(s =>
         {
-            client.OnMessageReceived += OnMessageReceived;
+            _client.OnMessageReceived += OnMessageReceived;
             Debug.Log("Joining");
             // 构建对话的时候需要指定一个 AVIMClient 实例做关联
-            lobbyConversation = AVIMConversation.CreateWithoutData(ConversationId, client);
+            _lobbyConversation = AVIMConversation.CreateWithoutData(ConversationId, _client);
             // 直接邀请赵云加入对话
-            client.JoinAsync(lobbyConversation).ContinueWith(a =>
+            _client.JoinAsync(_lobbyConversation).ContinueWith(a =>
             {
                 Debug.Log("Joined and sending message");
 
-                client.SendMessageAsync(lobbyConversation, new AVIMTextMessage("hello, can you hear me?"));
+                _client.SendMessageAsync(_lobbyConversation, new AVIMTextMessage("hello, can you hear me?"));
             });
         });
     }
@@ -59,6 +65,11 @@ public class RealTime : MonoBehaviour
             // textMessage.FromClientId 是消息发送者的 client Id
             Debug.Log(string.Format("你收到来自于 Id 为 {0} 的对话的文本消息，消息内容是： {1}，发送者的 client Id 是 {2}", textMessage.ConversationId, textMessage.TextContent, textMessage.FromClientId));
         }
+    }
+
+    public void Broadcast(AVIMMessage message)
+    {
+        _client.SendMessageAsync(_lobbyConversation, message);
     }
 
     [ContextMenu("Create Lobby")]

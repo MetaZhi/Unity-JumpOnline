@@ -5,11 +5,6 @@ using UniRx;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UserInfo
-{
-    public static AVUser User;
-}
-
 public class SignUpPanel : MonoBehaviour
 {
     public InputField UserName;
