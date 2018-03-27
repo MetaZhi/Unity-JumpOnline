@@ -40,7 +40,7 @@ public class LoginPanel : MonoBehaviour
                     UserInfo.User = t.Result;
 
                     // 加入realtime
-                    RealTime.Instance.JoinLobby();
+                    NetworkService.Instance.JoinLobby();
 
                     // 跳转到大厅界面
                     gameObject.SetActive(false);

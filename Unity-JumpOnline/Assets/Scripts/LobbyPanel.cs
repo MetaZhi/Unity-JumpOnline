@@ -5,7 +5,8 @@ using UnityEngine;
 
 public class LobbyPanel : MonoBehaviour
 {
-    public GameObject CreateRoomPanel;
+    public GameObject RoomHostPanel;
+    public GameObject RoomPanel;
 
 	// Use this for initialization
 	void Start () {
@@ -20,13 +21,13 @@ public class LobbyPanel : MonoBehaviour
     public void CreateRoom()
     {
         gameObject.SetActive(false);
-        CreateRoomPanel.SetActive(true);
+        RoomHostPanel.SetActive(true);
 
         var protocol = new CreateRoom()
         {
             Name = UserInfo.User.Username + "的房间"
         };
         var message = new AVIMTextMessage(JsonUtility.ToJson(protocol));
-        RealTime.Instance.Broadcast(message);
+        NetworkService.Instance.Broadcast(message);
     }
 }

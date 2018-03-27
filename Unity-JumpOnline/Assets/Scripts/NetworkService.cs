@@ -1,10 +1,7 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using LeanCloud.Realtime;
+﻿using LeanCloud.Realtime;
 using UnityEngine;
 
-public class RealTime : MonoBehaviour
+public class NetworkService : MonoBehaviour
 {
     public string AppId = "8RjJXnShOC4sa0tz9uyEuijJ-gzGzoHsz";
     public string AppKey = "k7p5fY1JRNGc8Toj7G6VF3Ee";
@@ -14,11 +11,13 @@ public class RealTime : MonoBehaviour
     AVIMClient _client;
     AVIMConversation _lobbyConversation;
 
-    private static RealTime _instance;
-    public static RealTime Instance
+    private static NetworkService _instance;
+    public static NetworkService Instance
     {
         get { return _instance; }
     }
+
+    RoomManager _roomManager = new RoomManager();
 
     // Use this for initialization
     void Start()
@@ -38,19 +37,22 @@ public class RealTime : MonoBehaviour
 
     public void JoinLobby()
     {
-        // 以周瑜的游戏 ID 3002 作为 client Id 构建 AVIMClient
         _avRealtime.CreateClientAsync(UserInfo.User).ContinueWith(t => _client = t.Result).ContinueWith(s =>
         {
             _client.OnMessageReceived += OnMessageReceived;
             Debug.Log("Joining");
             // 构建对话的时候需要指定一个 AVIMClient 实例做关联
             _lobbyConversation = AVIMConversation.CreateWithoutData(ConversationId, _client);
-            // 直接邀请赵云加入对话
             _client.JoinAsync(_lobbyConversation).ContinueWith(a =>
             {
-                Debug.Log("Joined and sending message");
+                if (a.IsFaulted)
+                {
+                    _lobbyConversation = null;
+                    Debug.Log("Join failed");
 
-                _client.SendMessageAsync(_lobbyConversation, new AVIMTextMessage("hello, can you hear me?"));
+                    return;
+                }
+                Debug.Log("Joined and sending message");
             });
         });
     }
@@ -64,6 +66,7 @@ public class RealTime : MonoBehaviour
             // textMessage.TextContent 是该文本消息的文本内容
             // textMessage.FromClientId 是消息发送者的 client Id
             Debug.Log(string.Format("你收到来自于 Id 为 {0} 的对话的文本消息，消息内容是： {1}，发送者的 client Id 是 {2}", textMessage.ConversationId, textMessage.TextContent, textMessage.FromClientId));
+            ProtocolManaer.Instance.Parse(textMessage.TextContent);
         }
     }
 
